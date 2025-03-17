@@ -174,8 +174,13 @@ let commands = {
     inject: (args) => {
         if (!args[0]) return term.writeln('  \x1b[31;1mmissing URL.\x1b[0m usage: inject [url]');
 
-        const url = args[0];
-        const type = url.split('.').pop();
+        let url = args[0];
+        let type = url.split('.').pop();
+
+        if (url == 'js' || url == 'css') {
+            type = args[0];
+            url = args[1];
+        }
 
         if (type === 'js') {
             let js = JSON.parse(localStorage.getItem('js') || '[]');
