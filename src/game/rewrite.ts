@@ -46,7 +46,7 @@ export default async ({ url }) => {
                 let allowed = config.fetchable.includes('*') || config.fetchable.some(r => new URL(source).host === r);
                 if (!allowed) return;
 
-                let raw = await fetch(source);
+                let raw = await fetch(source, { headers: { 'User-Agent': 'CrackedShell/3.0' }});
                 if (raw.status >= 400) return;
 
                 text = await raw.text();
@@ -82,7 +82,7 @@ export default async ({ url }) => {
                 !config.fetchable.includes('*')
             ) continue;
 
-            dependencies += `;(() => {${await fetch(dep).then((dep) => dep.text())}\n})();\n\n`;
+            dependencies += `;(() => {${await fetch(dep, { headers: { 'User-Agent': 'CrackedShell/3.0' }}).then((dep) => dep.text())}\n})();\n\n`;
         };
 
         return script += `;(() => {${dependencies};${text}\n})();\n\n`;
@@ -95,7 +95,7 @@ export default async ({ url }) => {
             let allowed = config.fetchable.includes('*') || config.fetchable.some(r => new URL(style).host === r);
             if (!allowed) return;
 
-            let raw = await fetch(style);
+            let raw = await fetch(style, { headers: { 'User-Agent': 'CrackedShell/3.0' }});
             if (raw.status >= 400) return;
 
             html += `<style>${await raw.text()}</style>`;
