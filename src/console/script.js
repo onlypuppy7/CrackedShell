@@ -182,6 +182,16 @@ let commands = {
             url = args[1];
         }
 
+        if (!url.startsWith('https://') && !url.startsWith('http://'))
+            url = 'https://' + url;
+
+        try {
+            new URL(url);
+        } catch {
+            term.writeln('  \x1b[31;1minvalid URL. format: "https://myscript.com/script.js" or "myscript.com/script.js"\x1b[0m');
+            return endTask();
+        }
+
         if (type === 'js') {
             let js = JSON.parse(localStorage.getItem('js') || '[]');
             js.push(url);

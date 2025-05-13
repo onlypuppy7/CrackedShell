@@ -24,7 +24,7 @@ export default async ({ url }) => {
     try {
         payload = JSON.parse(url.searchParams.get('payload'));
 
-        if (typeof payload.js === 'string') payload.js = ['core', ...JSON.parse(payload.js)];
+        if (typeof payload.js === 'string') payload.js = [...JSON.parse(payload.js)];
         else payload.js = [];
 
         if (typeof payload.css === 'string') payload.css = [...JSON.parse(payload.css)];
@@ -41,17 +41,15 @@ export default async ({ url }) => {
     await Promise.all(payload.js.map(async (source) => {
         let text = '';
 
-        if (source != 'core') {
-            try {
-                let allowed = config.fetchable.includes('*') || config.fetchable.some(r => new URL(source).host === r);
-                if (!allowed) return;
+        try {
+            let allowed = config.fetchable.includes('*') || config.fetchable.some(r => new URL(source).host === r);
+            if (!allowed) return;
 
-                let raw = await fetch(source, { headers: { 'User-Agent': 'CrackedShell/3.0' }});
-                if (raw.status >= 400) return;
+            let raw = await fetch(source, { headers: { 'User-Agent': 'CrackedShell/3.0' } });
+            if (raw.status >= 400) return;
 
-                text = await raw.text();
-            } catch { }
-        } else text = core;
+            text = await raw.text();
+        } catch { }
 
         let regex = /\/\/\s(@\w+)\s+([^\n]+)/g;
         let lastIndex = 0;
@@ -82,7 +80,7 @@ export default async ({ url }) => {
                 !config.fetchable.includes('*')
             ) continue;
 
-            dependencies += `;(() => {${await fetch(dep, { headers: { 'User-Agent': 'CrackedShell/3.0' }}).then((dep) => dep.text())}\n})();\n\n`;
+            dependencies += `;(() => {${await fetch(dep, { headers: { 'User-Agent': 'CrackedShell/3.0' } }).then((dep) => dep.text())}\n})();\n\n`;
         };
 
         return script += `;(() => {${dependencies};${text}\n})();\n\n`;
@@ -95,16 +93,19 @@ export default async ({ url }) => {
             let allowed = config.fetchable.includes('*') || config.fetchable.some(r => new URL(style).host === r);
             if (!allowed) return;
 
-            let raw = await fetch(style, { headers: { 'User-Agent': 'CrackedShell/3.0' }});
+            let raw = await fetch(style, { headers: { 'User-Agent': 'CrackedShell/3.0' } });
             if (raw.status >= 400) return;
 
             html += `<style>${await raw.text()}</style>`;
         } catch { }
     }));
 
-    return send(response.replace(`</script>`, `</script>
+    return send(`
         <script>window.$WEBSOCKET=globalThis.$WEBSOCKET=$WEBSOCKET="${payload.instance}";</script>
-        <script>window.$INSTANCE=globalThis.$INSTANCE=$INSTANCE=window.opener.$INSTANCE;</script>
-        <script>(() => {${script.replace(/\$/g, '$$$$')}\n})();\n</script>${html}`),
-        'text/html; charset=UTF-8');
+        <script>window.$INSTANCE=globalThis.$INSTANCE=$INSTANCE=window.opener?.$INSTANCE || localStorage.getItem('instance') || 'risenegg.com';</script>
+        <script>${core}</script>
+        <script>(() => {${script.replace(/\$/g, '$$$$')}\n})();\n</script>
+        ${html}
+        ${response}
+    `, 'text/html; charset=UTF-8');
 }
